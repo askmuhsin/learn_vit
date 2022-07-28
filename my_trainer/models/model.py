@@ -11,6 +11,7 @@ class Model(pl.LightningModule):
     ):
         super().__init__()
         self.model = model
+        self.criterion = nn.CrossEntropyLoss()
         
     def forward(self, x):
         return self.model(x)
