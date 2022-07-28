@@ -1,4 +1,5 @@
 import torch
+import torchmetrics
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -13,6 +14,9 @@ class Model(pl.LightningModule):
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         
+        self.train_acc = torchmetrics.Accuracy()
+        self.val_acc = torchmetrics.Accuracy()
+        
     def forward(self, x):
         return self.model(x)
     
@@ -21,12 +25,9 @@ class Model(pl.LightningModule):
         y_hat = self.forward(x)
         loss = self.criterion(y_hat, y)
         
-        total = len(y)
-        correct = sum(y_hat.argmax(axis=1)==y).item()
-        acc = round(100 * correct / total, 2)
-        
-        self.log('training_loss', loss.item(), on_epoch=True, on_step=False)
-        self.log('training_acc', acc, on_epoch=True, on_step=False)
+        self.train_acc(y_hat, y)
+        self.log('train_loss', loss.item(), on_epoch=True, on_step=False)
+        self.log('train_acc', self.train_acc, on_epoch=True, on_step=False)
         
         return loss
     
@@ -35,12 +36,9 @@ class Model(pl.LightningModule):
         y_hat = self.forward(x)
         loss = self.criterion(y_hat, y)
         
-        total = len(y)
-        correct = sum(y_hat.argmax(axis=1)==y).item()
-        acc = round(100 * correct / total, 2)
-        
+        self.val_acc(y_hat, y)
         self.log('val_loss', loss.item(), on_epoch=True, on_step=False)
-        self.log('val_acc', acc, on_epoch=True, on_step=False)
+        self.log('val_acc', self.val_acc, on_epoch=True, on_step=False)
 
     def test_step(self):
         pass
