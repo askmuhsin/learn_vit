@@ -2,6 +2,9 @@ dev/
 tests/data
 tests/logs
 
+wandb/
+default_learn_vit/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
