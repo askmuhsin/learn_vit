@@ -10,9 +10,10 @@ class Model(pl.LightningModule):
         model
     ):
         super().__init__()
+        self.model = model
         
     def forward(self, x):
-        return model(x)
+        return self.model(x)
     
     def training_step(self, batch, batch_idx):
         x, y = batch
