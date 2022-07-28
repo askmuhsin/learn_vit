@@ -17,6 +17,8 @@ class Model(pl.LightningModule):
         self.train_acc = torchmetrics.Accuracy()
         self.val_acc = torchmetrics.Accuracy()
         
+        self.save_hyperparameters()
+        
     def forward(self, x):
         return self.model(x)
     
