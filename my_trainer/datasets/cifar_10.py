@@ -4,16 +4,17 @@ import pytorch_lightning as pl
 import torchvision.transforms as transforms
 
 class CifarDataset(pl.LightningDataModule):
-        def __init__(
-            self,
-            train_batch_size=120,
-            test_batch_size=120,
-            data_dir='./data'
-        ):
+    def __init__(
+        self,
+        train_batch_size=120,
+        test_batch_size=120,
+        data_dir='./data'
+    ):
         super().__init__()
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
         self.data_dir = data_dir
+        self.num_workers = 4
         self.transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -35,14 +36,13 @@ class CifarDataset(pl.LightningDataModule):
     def train_dataloader(self):
         trainloader = torch.utils.data.DataLoader(
             self.trainset, batch_size=self.train_batch_size, 
-            shuffle=True, num_workers=32
+            shuffle=True, num_workers=self.num_workers
         )
         return trainloader
 
     def val_dataloader(self):
         testloader = torch.utils.data.DataLoader(
             self.testset, batch_size=self.test_batch_size, 
-            shuffle=False, num_workers=32
+            shuffle=False, num_workers=self.num_workers
         )
         return testloader
-
