@@ -159,3 +159,60 @@ class MLP(nn.Module):
         x = self.drop(x)           ## (n_samples, n_tokens, emb)
         
         return x
+
+
+class Block(nn.Module):
+    """
+    The transformer block ties together the Attention and MLP layer.
+    Before Attention and MLP, LayerNorm is applied as a regularizer.
+    
+    Parameters:
+        dim: int, dimension of input patches after projection
+        n_heads: int, number of heads in multi heads attention
+        attn_p: float, dropout probability after attention layer
+        proj_p: float, dropout probability after projection layer
+        mlp_ratio: float, decides the size of mlp hidden layer
+        mlp_p: float, dropout probability after mlp layer
+        
+    Learnables:
+        norm_1: nn.LayerNorm
+        norm_2: nn.LayerNorm
+        
+        attn: vit.Attention
+        mlp: vit.MLP
+    
+    """
+    def __init__(
+        self,
+        dim=768,
+        n_heads=12,
+        attn_p=.0,
+        proj_p=.0,
+        mlp_ratio=4.0,
+        mlp_p=.0,
+    ):
+        super().__init__()
+        
+        self.norm_1 = nn.LayerNorm(dim, eps=1e-6)    
+        self.attn = Attention(dim, n_heads, attn_p, proj_p)
+        
+        self.norm_2 = nn.LayerNorm(dim, eps=1e-6)
+        self.mlp = MLP(
+            in_features=dim, 
+            hidden_features=int(dim * mlp_ratio), 
+            out_features=dim, 
+            dropout_p=mlp_p
+        )
+    
+    def forward(self, x):
+        """
+        Parameter:
+            x: torch.Tensor, shape `(n_samples, n_tokens, emb)`
+        
+        Returns:
+            torch.Tensor, shape `(n_samples, n_tokens, emb)`
+        """
+        x = x + self.attn(self.norm_1(x))
+        x = x + self.mlp(self.norm_2(x))
+        
+        return x
