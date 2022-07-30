@@ -43,7 +43,7 @@ class PatchEmbeddings(nn.Module):
         Returns:
             torch.Tensor, shape `(n_samples, n_patches, embedding_size)`
         """
-        x = self.projection(x)
-        x = x.flatten(2)
-        x = x.transpose(1, 2)
+        x = self.projection(x) ## (n_samples, embedding_size, n_p_h, n_p_w)
+        x = x.flatten(2)       ## (n_samples, embedding_size, n_patches)
+        x = x.transpose(1, 2)  ## (n_samples, n_patches, embedding_size)
         return x
