@@ -115,3 +115,47 @@ class Attention(nn.Module):
         x = self.proj_dropout(x)
         
         return x
+
+
+class MLP(nn.Module):
+    """
+    Multi layer perceptron Layer
+    
+    Parameters:
+        in_features: int, feature dim of input
+        hidden_features: int, hidden layer features
+        out_features: int, output layer features
+        dropout_p: float, prob of dropout
+        
+    Learnables:
+        fc1: nn.Linear
+        fc2: nn.Linear
+    """
+    def __init__(
+        self,
+        in_features,
+        hidden_features,
+        out_features,
+        dropout_p=.0,
+    ):
+        super().__init__()
+        
+        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.fc2 = nn.Linear(hidden_features, out_features)
+        self.act = nn.GELU()
+        self.drop = nn.Dropout(dropout_p)
+    
+    def forward(self, x):
+        """
+        Parameters:
+            x: torch.Tensor, shape `(n_samples, n_tokens, emb)`
+        
+        Returns:
+            x: torch.Tensor, shape `(n_samples, n_tokens, emb)`
+        """
+        x = self.act(self.fc1(x))  ## (n_samples, n_tokens, emb)
+        x = self.drop(x)
+        x = self.fc2(x)
+        x = self.drop(x)           ## (n_samples, n_tokens, emb)
+        
+        return x
