@@ -221,16 +221,31 @@ class Block(nn.Module):
 
 class VisionTransformer(nn.Module):
     """
-
+    The Vision Transformer block takes in an image, slices it up into patches,
+    does a linear projection, prepends with the class token, adds the positional embedding,
+    and puts it throught the enocder block, normalizes it, and projects to n_classes
+    
     Parameters:
         image_channels: int, input channels of images
         patch_size: int, size of each square patch
         embedding_size: int, embedding size of projection of each patch
+        n_heads: int, number of heads in multi heads attention
+        attn_p: float, dropout probability after attention layer
+        proj_p: float, dropout probability after projection layer
+        mlp_ratio: float, decides the size of mlp hidden layer
+        mlp_p: float, dropout probability after mlp layer
+        encoder_depth: int, the number of sequential encoder blocks
+        n_classes: int, number of classes in classifier
+        pos_p: int, dropout probabilty for positional embedding
         
 
     Learnables:
-        cls_token: torch.Parameters, class token
-        positional_embeddings:
+        patch_embed: vit.PatchEmbeddings,
+        cls_token: nn.Parameter, class token initilized to 0s
+        positional_embeddings: nn.Parameter, positional embeddings initialized to 0s
+        blocks: list[vit.Block], encoder_depth X encoder Blocks
+        norm: nn.LayerNorm, layer normalization for final encoder output
+        head: nn.Linear, final projection head to number of classes
     """
     def __init__(
         self,
@@ -282,6 +297,9 @@ class VisionTransformer(nn.Module):
         """
         Parameters:
             x: torch.Tensor, shape `(n_samples, n_channels, h, w)`
+        
+        Returns:
+            torch.Tensor, shape `(n_samples, n_classes)`
         """
         n_samples = x.shape[0]
         logging.info(f'number of samples -- {n_samples}')
