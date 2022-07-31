@@ -254,10 +254,10 @@ class VisionTransformer(nn.Module):
             in_channels=image_channels,
             embedding_size=embedding_size,
         )
-        self.cls_token = torch.Parameters(
+        self.cls_token = nn.Parameter(
             torch.zeros(1, 1, embedding_size)
         )
-        self.positional_embeddings = torch.Parameters(
+        self.positional_embeddings = nn.Parameter(
             torch.zeros(1, 1 + self.n_patches, embedding_size)
         )
         self.pos_drop = nn.Dropout(p=pos_p)
