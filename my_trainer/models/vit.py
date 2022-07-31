@@ -216,3 +216,87 @@ class Block(nn.Module):
         x = x + self.mlp(self.norm_2(x))
         
         return x
+
+
+class VisionTransformer(nn.Module):
+    """
+
+    Parameters:
+        image_channels: int, input channels of images
+        patch_size: int, size of each square patch
+        embedding_size: int, embedding size of projection of each patch
+        
+
+    Learnables:
+        cls_token: torch.Parameters, class token
+        positional_embeddings:
+    """
+    def __init__(
+        self,
+        img_size,
+        image_channels=3,
+        patch_size=16,
+        embedding_size=768,
+        n_heads=12,
+        attn_p=.0,
+        proj_p=.0,
+        mlp_ratio=4.0,
+        mlp_p=.0,
+        encoder_depth=12,
+        n_classes=1000,
+        pos_p=.0,
+    ):
+        super().__init__()
+
+        self.n_patches = (img_size // patch_size) ** 2
+        self.patch_embed = PatchEmbeddings(
+            patch_size=patch_size,
+            in_channels=image_channels,
+            embedding_size=embedding_size,
+        )
+        self.cls_token = torch.Parameters(
+            torch.zeros(1, 1, embedding_size)
+        )
+        self.positional_embeddings = torch.Parameters(
+            torch.zeros(1, 1 + self.n_patches, embedding_size)
+        )
+        self.pos_drop = nn.Dropout(p=pos_p)
+        self.blocks = nn.ModuleList(
+            [
+                Block(
+                    dim=embedding_size,
+                    n_heads=n_heads,
+                    attn_p=attn_p,
+                    proj_p=proj_p,
+                    mlp_ratio=mlp_ratio,
+                    mlp_p=mlp_p,
+                )
+                for _ in range(encoder_depth)
+            ]
+        )
+        self.norm = nn.LayerNorm(embedding_size,  eps=1e-6)
+        self.head = nn.Linear(embedding_size, n_classes)
+    
+    def forward(self, x):
+        """
+        Parameters:
+            x: torch.Tensor, shape `(n_samples, n_channels, h, w)`
+        """
+        n_samples = x.shape[0]
+
+        x = self.patch_embed(x)  ## (n_samples, n_patches, embedding_size)
+        
+        cls_tokens = self.cls_token.expand(n_samples, -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)  ## (n_samples, 1 + n_patches, embedding_size)
+        x = x + self.positional_embeddings     ## (n_samples, 1 + n_patches, embedding_size)
+        x = self.pos_drop(x)
+
+        for block in self.blocks:
+            x = block(x)                       ## (n_samples, 1 + n_patches, embedding_size)
+        
+        x = self.norm(x)
+
+        cls_token_final = x[:, 0]              ## (n_samples, 1, embedding_size)
+        x = self.head(cls_token_final)         ## (n_samples, class_size)
+
+        return x
