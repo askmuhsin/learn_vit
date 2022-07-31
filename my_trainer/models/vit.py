@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import logging
 
 
 class PatchEmbeddings(nn.Module):
@@ -283,20 +284,26 @@ class VisionTransformer(nn.Module):
             x: torch.Tensor, shape `(n_samples, n_channels, h, w)`
         """
         n_samples = x.shape[0]
-
+        logging.info(f'number of samples -- {n_samples}')
         x = self.patch_embed(x)  ## (n_samples, n_patches, embedding_size)
-        
+        logging.info(f'After patch embbedding -- {x.shape}')
+
         cls_tokens = self.cls_token.expand(n_samples, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)  ## (n_samples, 1 + n_patches, embedding_size)
         x = x + self.positional_embeddings     ## (n_samples, 1 + n_patches, embedding_size)
         x = self.pos_drop(x)
+        logging.info(f'After cls token and pos embedding -- {x.shape}')
 
         for block in self.blocks:
             x = block(x)                       ## (n_samples, 1 + n_patches, embedding_size)
+        logging.info(f'After {len(self.blocks)} attention blocks -- {x.shape}')
         
         x = self.norm(x)
 
-        cls_token_final = x[:, 0]              ## (n_samples, 1, embedding_size)
+        cls_token_final = x[:, 0]              ## (n_samples, embedding_size)
+        logging.info(f'Size of final class token -- {cls_token_final.shape}')
+
         x = self.head(cls_token_final)         ## (n_samples, class_size)
+        logging.info(f'After final head -- {x.shape}')
 
         return x
