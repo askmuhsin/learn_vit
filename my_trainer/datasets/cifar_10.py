@@ -6,8 +6,8 @@ import torchvision.transforms as transforms
 class CifarDataset(pl.LightningDataModule):
     def __init__(
         self,
-        train_batch_size=120,
-        test_batch_size=120,
+        train_batch_size=128,
+        test_batch_size=128,
         data_dir='./data'
     ):
         super().__init__()
@@ -16,9 +16,15 @@ class CifarDataset(pl.LightningDataModule):
         self.data_dir = data_dir
         self.num_workers = 4
         self.transform = transforms.Compose([
+            transforms.Resize(224),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
+        self.classes = (
+            'plane', 'car', 'bird', 'cat', 
+            'deer', 'dog', 'frog', 'horse', 
+            'ship', 'truck'
+        )
     
     def prepare_data(self):
         self.trainset = torchvision.datasets.CIFAR10(
